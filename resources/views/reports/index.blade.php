@@ -7,13 +7,13 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Reports</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Reports</h1>
             <p class="text-slate-500 text-sm mt-1">Business analytics and monitoring</p>
         </div>
-        <div class="flex gap-2">
-            <input type="date" value="{{ date('Y-m-d') }}" class="px-3 py-2 rounded-lg border border-slate-200 text-sm">
-            <input type="date" value="{{ date('Y-m-d') }}" class="px-3 py-2 rounded-lg border border-slate-200 text-sm">
-            <button class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium">Filter</button>
+        <div class="flex flex-wrap gap-2">
+            <input type="date" value="{{ date('Y-m-d') }}" class="flex-1 min-w-[130px] px-3 py-2 rounded-lg border border-slate-200 text-sm">
+            <input type="date" value="{{ date('Y-m-d') }}" class="flex-1 min-w-[130px] px-3 py-2 rounded-lg border border-slate-200 text-sm">
+            <button class="w-full sm:w-auto px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium transition-colors">Filter</button>
         </div>
     </div>
 

@@ -6,12 +6,12 @@
 <div class="space-y-8">
     {{-- Header --}}
     <div>
-        <h1 class="text-2xl font-bold text-slate-800">Dashboard Owner</h1>
-        <p class="text-slate-500 mt-1">Pemantauan dan evaluasi usaha — pengambilan keputusan bisnis</p>
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Dashboard Owner</h1>
+        <p class="text-slate-500 text-sm mt-1">Pemantauan dan evaluasi usaha — pengambilan keputusan bisnis</p>
     </div>
 
     {{-- Stat Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>

@@ -5,12 +5,12 @@
 @section('content')
 <div class="space-y-8">
     <div>
-        <h1 class="text-2xl font-bold text-slate-800">Dashboard Petugas Gudang</h1>
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Dashboard Petugas Gudang</h1>
         <p class="text-slate-500 mt-1">Mencatat barang masuk, memperbarui stok, dan memastikan ketersediaan barang</p>
     </div>
 
     {{-- Quick Actions --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
         <a href="{{ route('inventory.index') }}" class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md hover:border-sky-200 transition-all group">
             <div class="flex items-center justify-between">
                 <div>

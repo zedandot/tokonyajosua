@@ -6,7 +6,7 @@
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Product Management</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Product Management</h1>
             <p class="text-slate-500 text-sm mt-1">Manage your product catalog</p>
         </div>
         <button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium">
@@ -17,7 +17,7 @@
 
     <div class="flex flex-col sm:flex-row gap-4">
         <input type="search" placeholder="Search products..." class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200">
-        <select class="px-4 py-2.5 rounded-lg border border-slate-200">
+        <select class="px-4 py-2.5 rounded-lg border border-slate-200 min-w-[140px]">
             <option value="">All Categories</option>
             <option>Beverages</option>
             <option>Snacks</option>

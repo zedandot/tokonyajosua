@@ -7,7 +7,7 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">User Management</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-800">User Management</h1>
             <p class="text-slate-500 text-sm mt-1">Manage system users and access</p>
         </div>
         <button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium transition-colors">

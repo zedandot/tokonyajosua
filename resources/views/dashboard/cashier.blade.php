@@ -5,12 +5,12 @@
 @section('content')
 <div class="space-y-8">
     <div>
-        <h1 class="text-2xl font-bold text-slate-800">Dashboard Kasir</h1>
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Dashboard Kasir</h1>
         <p class="text-slate-500 mt-1">Input transaksi penjualan dan pencatatan barang yang dibeli pelanggan</p>
     </div>
 
     {{-- Quick Stats --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <div class="flex items-center justify-between">
                 <div>
