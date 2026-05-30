@@ -8,11 +8,28 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    // Menampilkan halaman daftar produk
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category')->latest()->get();
+        // 1. Mulai merakit kueri MongoDB
+        $query = Product::with('category')->latest();
+
+        // 2. Jika ada parameter pencarian (search)
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            // Mencari berdasarkan nama produk
+            $query->where('name', 'like', '%' . $searchTerm . '%');
+        }
+
+        // 3. Jika ada parameter filter kategori
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        // 4. Eksekusi kueri akhir
+        $products = $query->get();
+        
         $categories = Category::all();
+        
         return view('products.index', compact('products', 'categories'));
     }
 
@@ -23,7 +40,7 @@ class ProductController extends Controller
         return view('products.create', compact('categories'));
     }
 
-    // 🟢 BAGIAN YANG BERUBAH: Menyimpan data ke Product & Inventory
+    // Menyimpan data ke Product & Inventory
     public function store(Request $request)
     {
         $request->validate([
@@ -61,7 +78,7 @@ class ProductController extends Controller
         return view('products.edit', compact('product', 'categories'));
     }
 
-    // 🟢 BAGIAN YANG BERUBAH: Memperbarui data di Product & Inventory
+    // Memperbarui data di Product & Inventory
     public function update(Request $request, Product $product)
     {
         $request->validate([
