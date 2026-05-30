@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
 {
     use SoftDeletes;
+    
+    protected $connection = 'mongodb';
+    protected $collection = 'sales';
 
     protected $fillable = [
         'invoice_number',
@@ -103,5 +106,10 @@ class Sale extends Model
     public function getGrossProfitAttribute(): float
     {
         return (float) ($this->total_amount - $this->total_cost);
+    }
+    // Relasi ke detail barang yang terjual
+    public function saleItems()
+    {
+        return $this->hasMany(SaleItem::class);
     }
 }

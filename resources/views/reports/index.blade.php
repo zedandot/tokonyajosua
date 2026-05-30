@@ -10,26 +10,27 @@
             <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Reports</h1>
             <p class="text-slate-500 text-sm mt-1">Business analytics and monitoring</p>
         </div>
-        <div class="flex flex-wrap gap-2">
-            <input type="date" value="{{ date('Y-m-d') }}" class="flex-1 min-w-[130px] px-3 py-2 rounded-lg border border-slate-200 text-sm">
-            <input type="date" value="{{ date('Y-m-d') }}" class="flex-1 min-w-[130px] px-3 py-2 rounded-lg border border-slate-200 text-sm">
-            <button class="w-full sm:w-auto px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium transition-colors">Filter</button>
-        </div>
+        
+        <form action="{{ route('reports.index') }}" method="GET" class="flex flex-wrap gap-2">
+            <input type="date" name="start_date" value="{{ $startDate ?? date('Y-m-d') }}" class="flex-1 min-w-[130px] px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-sky-500">
+            <input type="date" name="end_date" value="{{ $endDate ?? date('Y-m-d') }}" class="flex-1 min-w-[130px] px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-sky-500">
+            <button type="submit" class="w-full sm:w-auto px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium transition-colors">Filter</button>
+        </form>
     </div>
 
-    {{-- Profit Summary --}}
+    {{-- Profit Summary (Ditambah pengaman ??) --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <p class="text-sm font-medium text-slate-500">Total Revenue</p>
-            <p class="text-2xl font-bold text-slate-800 mt-1">Rp 12.450.000</p>
+            <p class="text-2xl font-bold text-slate-800 mt-1">Rp {{ number_format($totalRevenue ?? 0, 0, ',', '.') }}</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <p class="text-sm font-medium text-slate-500">Total Cost</p>
-            <p class="text-2xl font-bold text-slate-800 mt-1">Rp 9.200.000</p>
+            <p class="text-2xl font-bold text-slate-800 mt-1">Rp {{ number_format($totalCost ?? 0, 0, ',', '.') }}</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <p class="text-sm font-medium text-slate-500">Net Profit</p>
-            <p class="text-2xl font-bold text-emerald-600 mt-1">Rp 3.250.000</p>
+            <p class="text-2xl font-bold text-emerald-600 mt-1">Rp {{ number_format($netProfit ?? 0, 0, ',', '.') }}</p>
         </div>
     </div>
 
@@ -51,7 +52,7 @@
             <div class="space-y-3">
                 <div class="flex justify-between items-center">
                     <span class="text-slate-600">Total Products</span>
-                    <span class="font-semibold text-slate-800">248</span>
+                    <span class="font-semibold text-slate-800">{{ $totalProducts ?? 0 }}</span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-slate-600">Low Stock Items</span>
@@ -77,13 +78,17 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach(range(1, 8) as $i)
+                        @forelse($sales ?? [] as $sale)
                         <tr class="border-b border-slate-50 hover:bg-slate-50">
-                            <td class="py-2 font-mono text-slate-700">TRX-{{ 2840 + $i }}</td>
-                            <td class="py-2 text-slate-600">{{ now()->subHours($i * 2)->format('d/m H:i') }}</td>
-                            <td class="py-2 text-right font-medium text-slate-800">Rp {{ number_format(35000 + $i * 5000, 0, ',', '.') }}</td>
+                            <td class="py-2 font-mono text-slate-700">TRX-{{ $sale->id }}</td>
+                            <td class="py-2 text-slate-600">{{ $sale->created_at->format('d/m H:i') }}</td>
+                            <td class="py-2 text-right font-medium text-slate-800">Rp {{ number_format($sale->grand_total ?? $sale->total_amount ?? 0, 0, ',', '.') }}</td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="3" class="py-4 text-center text-slate-500">Belum ada transaksi pada rentang tanggal ini.</td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

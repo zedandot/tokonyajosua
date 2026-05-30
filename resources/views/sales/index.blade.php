@@ -20,26 +20,18 @@
             </div>
             <div class="p-4">
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    @php $products = [
-                        ['id' => 1, 'name' => 'Kopi Sachet', 'price' => 2500, 'img' => null],
-                        ['id' => 2, 'name' => 'Susu UHT 1L', 'price' => 15000, 'img' => null],
-                        ['id' => 3, 'name' => 'Mie Instan', 'price' => 3500, 'img' => null],
-                        ['id' => 4, 'name' => 'Snack Keripik', 'price' => 5000, 'img' => null],
-                        ['id' => 5, 'name' => 'Aqua Gelas', 'price' => 500, 'img' => null],
-                        ['id' => 6, 'name' => 'Teh Botol', 'price' => 4000, 'img' => null],
-                        ['id' => 7, 'name' => 'Roti Tawar', 'price' => 12000, 'img' => null],
-                        ['id' => 8, 'name' => 'Indomie Goreng', 'price' => 3000, 'img' => null],
-                        ['id' => 9, 'name' => 'Coca-Cola 330ml', 'price' => 5000, 'img' => null],
-                        ['id' => 10, 'name' => 'Chitato', 'price' => 8500, 'img' => null],
-                    ]; @endphp
-                    @foreach($products as $p)
-                    <button @click="addToCart({{ $p['id'] }}, '{{ addslashes($p['name']) }}', {{ $p['price'] }})"
+                   @foreach($products as $p)
+                    <button @click="addToCart('{{ $p->id }}', '{{ addslashes($p->name) }}', {{ $p->selling_price }}, {{ $p->inventory->current_stock ?? 0 }})"
                         class="flex flex-col items-center p-3 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 active:scale-95 transition-all text-left">
                         <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center mb-2">
                             <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                         </div>
-                        <span class="text-xs sm:text-sm font-medium text-slate-700 truncate w-full text-center">{{ $p['name'] }}</span>
-                        <span class="text-xs text-sky-600 font-semibold mt-0.5">Rp {{ number_format($p['price'], 0, ',', '.') }}</span>
+                        <span class="text-xs sm:text-sm font-medium text-slate-700 truncate w-full text-center">{{ $p->name }}</span>
+                        <span class="text-xs text-sky-600 font-semibold mt-0.5">Rp {{ number_format($p->selling_price, 0, ',', '.') }}</span>
+                        <span class="text-[10px] mt-1 font-medium" 
+                              :class="getRemainingStock('{{ $p->id }}', {{ $p->inventory->current_stock ?? 0 }}) === 0 ? 'text-red-500' : 'text-slate-400'"
+                              x-text="'Stok: ' + getRemainingStock('{{ $p->id }}', {{ $p->inventory->current_stock ?? 0 }})">
+                        </span>
                     </button>
                     @endforeach
                 </div>
@@ -70,7 +62,7 @@
                                 <button @click="updateQty(i, -1)" class="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 font-bold">−</button>
                                 <span class="w-6 text-center font-medium text-slate-700 text-sm" x-text="item.qty"></span>
                                 <button @click="updateQty(i, 1)" class="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 font-bold">+</button>
-                                <button @click="removeItem(i)" class="w-7 h-7 rounded bg-red-100 hover:bg-red-200 text-red-600 flex items-center justify-center ml-1">
+                                <button @click="removeItem(item.id)" class="w-7 h-7 rounded bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center ml-1 transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </div>
@@ -99,24 +91,92 @@ function posApp() {
     return {
         search: '',
         cart: [],
-        addToCart(id, name, price) {
-            const idx = this.cart.findIndex(c => c.id === id && c.name === name && c.price === price);
-            if (idx >= 0) this.cart[idx].qty++;
-            else this.cart.push({ id, name, price, qty: 1 });
+        
+        // 🟢 FUNGSI BARU: Menghitung sisa stok dinamis
+        getRemainingStock(id, initialStock) {
+            const cartItem = this.cart.find(c => c.id === id);
+            const qtyInCart = cartItem ? cartItem.qty : 0;
+            return initialStock - qtyInCart;
         },
+
+        // 🟢 LOGIKA BARU: Mencegah penambahan jika stok habis
+        addToCart(id, name, price, maxStock) {
+            const idx = this.cart.findIndex(c => c.id === id);
+            
+            if (idx >= 0) {
+                if (this.cart[idx].qty < maxStock) {
+                    this.cart[idx].qty++;
+                } else {
+                    alert('Tidak bisa menambah! Sisa stok ' + name + ' tidak mencukupi.');
+                }
+            } else {
+                if (maxStock > 0) {
+                    this.cart.push({ id, name, price, qty: 1, maxStock });
+                } else {
+                    alert('Stok ' + name + ' sedang kosong!');
+                }
+            }
+        },
+
+        // 🟢 LOGIKA BARU: Tombol plus (+) di keranjang juga dicegah jika melebihi stok
         updateQty(i, delta) {
-            this.cart[i].qty += delta;
+            const newQty = this.cart[i].qty + delta;
+            if (newQty > this.cart[i].maxStock) {
+                alert('Tidak bisa menambah! Mencapai batas maksimal stok gudang.');
+                return;
+            }
+            this.cart[i].qty = newQty;
             if (this.cart[i].qty <= 0) this.cart.splice(i, 1);
         },
-        removeItem(i) { this.cart.splice(i, 1); },
-        get total() {
-            return this.cart.reduce((s, c) => s + c.price * c.qty, 0);
+
+        removeItem(id) { 
+            this.cart = this.cart.filter(c => c.id !== id);
         },
-        formatNumber(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); },
-        checkout() {
+        get total() {
+            return this.cart.reduce((s, c) => s + (c.price * c.qty), 0);
+        },
+        formatNumber(n) { 
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); 
+        },
+        
+        async checkout() {
             if (this.cart.length === 0) return;
-            alert('Transaction complete!\nTotal: Rp ' + this.formatNumber(this.total));
-            this.cart = [];
+            
+            const btn = document.querySelector('button[disabled]') || document.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Processing...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('{{ route('sales.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        total: this.total,
+                        items: this.cart
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Transaksi Berhasil!\nTotal Pembayaran: Rp ' + this.formatNumber(this.total));
+                    this.cart = [];
+                    window.location.reload(); 
+                } else {
+                    alert('Transaksi Gagal: ' + (result.message || 'Error tidak diketahui'));
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                alert('Terjadi kesalahan jaringan.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
     };
 }

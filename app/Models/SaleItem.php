@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class SaleItem extends Model
 {
+
+    protected $connection = 'mongodb';
+    protected $collection = 'sale_items';
+    
     protected $fillable = [
         'sale_id',
         'product_id',

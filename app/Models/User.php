@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use MongoDB\Laravel\Auth\User as Authenticatable; 
+use MongoDB\Laravel\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
+
+    // 🟢 KUNCI MUTLAK MONGODB: Wajib ditambahkan agar tidak nyasar ke MySQL
+    protected $connection = 'mongodb';
+    protected $collection = 'users';
 
     /**
      * The attributes that are mass assignable.

@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use MongoDB\Laravel\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\SoftDeletes; 
 use Illuminate\Support\Str;
 
 class Category extends Model
 {
     use SoftDeletes;
+
+    protected $connection = 'mongodb';
+    protected $collection = 'categories';
 
     protected $fillable = ['name', 'slug', 'description'];
 

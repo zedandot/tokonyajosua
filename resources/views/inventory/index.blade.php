@@ -10,11 +10,18 @@
             <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Inventory / Warehouse</h1>
             <p class="text-slate-500 text-sm mt-1">Manage stock and incoming goods</p>
         </div>
-        <button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium transition-colors">
+        
+        <a href="{{ route('inventory.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Record Incoming
-        </button>
+        </a>
     </div>
+
+    @if(session('success'))
+    <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50">
+        {{ session('success') }}
+    </div>
+    @endif
 
     {{-- Inventory Stock Table --}}
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -27,30 +34,19 @@
                         <th class="px-6 py-4 text-left font-semibold">SKU</th>
                         <th class="px-6 py-4 text-right font-semibold">Stock</th>
                         <th class="px-6 py-4 text-right font-semibold">Min. Stock</th>
-                        <th class="px-6 py-4 text-center font-semibold">Update</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @php $items = [
-                        ['name' => 'Kopi Sachet Premium', 'sku' => 'KOP-001', 'stock' => 120, 'min' => 50],
-                        ['name' => 'Susu UHT 1L', 'sku' => 'SUS-002', 'stock' => 45, 'min' => 30],
-                        ['name' => 'Teh Botol 350ml', 'sku' => 'TEH-003', 'stock' => 5, 'min' => 20],
-                        ['name' => 'Mie Instan', 'sku' => 'MIE-004', 'stock' => 200, 'min' => 100],
-                        ['name' => 'Roti Tawar', 'sku' => 'ROT-005', 'stock' => 3, 'min' => 15],
-                    ]; @endphp
-                    @foreach($items as $i)
+                    @foreach($products as $product)
                     <tr class="border-t border-slate-100 hover:bg-slate-50">
-                        <td class="px-6 py-4 font-medium text-slate-800">{{ $i['name'] }}</td>
-                        <td class="px-6 py-4 text-slate-600 font-mono">{{ $i['sku'] }}</td>
+                        <td class="px-6 py-4 font-medium text-slate-800">{{ $product->name }}</td>
+                        <td class="px-6 py-4 text-slate-600 font-mono">{{ $product->sku }}</td>
                         <td class="px-6 py-4 text-right">
-                            <span class="{{ $i['stock'] <= $i['min'] ? 'text-amber-600 font-semibold' : 'text-slate-700' }}">
-                                {{ $i['stock'] }} pcs
+                            <span class="{{ $product->is_low_stock ? 'text-amber-600 font-semibold' : 'text-slate-700' }}">
+                                {{ $product->current_stock }} pcs
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-right text-slate-600">{{ $i['min'] }} pcs</td>
-                        <td class="px-6 py-4 text-center">
-                            <button class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium">Update</button>
-                        </td>
+                        <td class="px-6 py-4 text-right text-slate-600">{{ $product->inventory->minimum_stock ?? 0 }} pcs</td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -73,9 +69,25 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="border-t border-slate-100"><td class="px-6 py-4">10 Mar 2025 14:30</td><td class="px-6 py-4">Susu UHT 1L</td><td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-xs">Incoming</span></td><td class="px-6 py-4 text-right">+50</td><td class="px-6 py-4 text-slate-500">Restock</td></tr>
-                    <tr class="border-t border-slate-100"><td class="px-6 py-4">10 Mar 2025 12:15</td><td class="px-6 py-4">Kopi Sachet</td><td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-xs">Outgoing</span></td><td class="px-6 py-4 text-right">-3</td><td class="px-6 py-4 text-slate-500">Sale</td></tr>
-                    <tr class="border-t border-slate-100"><td class="px-6 py-4">10 Mar 2025 09:00</td><td class="px-6 py-4">Mie Instan</td><td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-xs">Incoming</span></td><td class="px-6 py-4 text-right">+100</td><td class="px-6 py-4 text-slate-500">Purchase order</td></tr>
+                    @forelse($movements as $movement)
+                    <tr class="border-t border-slate-100">
+                        <td class="px-6 py-4">{{ $movement->created_at->format('d M Y H:i') }}</td>
+                        <td class="px-6 py-4">{{ $movement->product->name ?? 'Produk Dihapus' }}</td>
+                        <td class="px-6 py-4">
+                            @if($movement->type === 'incoming' || $movement->quantity > 0)
+                                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-xs">Incoming</span>
+                            @else
+                                <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-xs">Outgoing</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 text-right">{{ $movement->quantity > 0 ? '+'.$movement->quantity : $movement->quantity }}</td>
+                        <td class="px-6 py-4 text-slate-500">{{ $movement->notes ?? '-' }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-slate-500">Belum ada riwayat pergerakan stok.</td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

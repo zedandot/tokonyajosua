@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model; 
 
 class StockMovement extends Model
 {
+    // 🟢 KUNCI MUTLAK MONGODB: Ditambahkan agar sistem langsung membaca dari Atlas
+    protected $connection = 'mongodb';
+    protected $collection = 'stock_movements';
+
     protected $fillable = [
         'product_id',
         'user_id',

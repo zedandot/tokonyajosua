@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use MongoDB\Laravel\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\SoftDeletes; // 🟢 UBAH KE JALUR MONGODB
 
 class Supplier extends Model
 {
     use SoftDeletes;
+
+    // 🟢 KUNCI MUTLAK MONGODB
+    protected $connection = 'mongodb';
+    protected $collection = 'suppliers';
 
     protected $fillable = [
         'name',

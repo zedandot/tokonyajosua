@@ -15,10 +15,10 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-slate-500">Total Sales Today</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1">Rp 2.450.000</p>
-                    <p class="text-xs text-emerald-600 mt-1 flex items-center gap-1">
-                        <span>↑ 12.5%</span> vs yesterday
+                    <p class="text-sm font-medium text-slate-500">Pendapatan Hari Ini</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1">Rp {{ number_format($revenueToday, 0, ',', '.') }}</p>
+                    <p class="text-xs {{ $percentageChange >= 0 ? 'text-emerald-600' : 'text-red-600' }} mt-1 flex items-center gap-1">
+                        <span>{{ $percentageChange >= 0 ? '↑' : '↓' }} {{ number_format(abs($percentageChange), 1) }}%</span> vs yesterday
                     </p>
                 </div>
                 <div class="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center">
@@ -29,9 +29,9 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-slate-500">Modal Belanja</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1">Rp 9.200.000</p>
-                    <p class="text-xs text-slate-400 mt-1">Total pembelian stok</p>
+                    <p class="text-sm font-medium text-slate-500">Nilai Aset Gudang</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1">Rp {{ number_format($totalCapital, 0, ',', '.') }}</p>
+                    <p class="text-xs text-slate-400 mt-1">Total modal stok saat ini</p>
                 </div>
                 <div class="w-12 h-12 rounded-lg bg-sky-100 flex items-center justify-center">
                     <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
@@ -42,7 +42,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500">Total Products</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1">248</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1">{{ $totalProducts }}</p>
                     <p class="text-xs text-slate-400 mt-1">Active in catalog</p>
                 </div>
                 <div class="w-12 h-12 rounded-lg bg-violet-100 flex items-center justify-center">
@@ -54,7 +54,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500">Low Stock Items</p>
-                    <p class="text-2xl font-bold text-amber-600 mt-1">12</p>
+                    <p class="text-2xl font-bold text-amber-600 mt-1">{{ $lowStockCount }}</p>
                     <p class="text-xs text-amber-600 mt-1">Needs restock</p>
                 </div>
                 <div class="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center">
@@ -65,66 +65,57 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {{-- Sales Analytics Chart --}}
+        {{-- Sales Analytics Chart (7 Hari Terakhir) --}}
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-            <h3 class="font-semibold text-slate-800 mb-4">Sales Analytics</h3>
+            <h3 class="font-semibold text-slate-800 mb-4">Sales Analytics (7 Days)</h3>
             <div class="h-64 flex items-end gap-2">
-                <div class="flex-1 bg-slate-100 rounded-t" style="height: 45%"></div>
-                <div class="flex-1 bg-slate-200 rounded-t" style="height: 65%"></div>
-                <div class="flex-1 bg-slate-300 rounded-t" style="height: 55%"></div>
-                <div class="flex-1 bg-sky-400 rounded-t" style="height: 80%"></div>
-                <div class="flex-1 bg-sky-500 rounded-t" style="height: 70%"></div>
-                <div class="flex-1 bg-sky-600 rounded-t" style="height: 90%"></div>
-                <div class="flex-1 bg-sky-500 rounded-t animate-pulse" style="height: 75%"></div>
+                @foreach($chartData as $chart)
+                <div class="flex-1 flex flex-col justify-end items-center group relative h-full">
+                    <div class="absolute bottom-full mb-2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                        Rp {{ number_format($chart['total'], 0, ',', '.') }}
+                    </div>
+                    <div class="w-full {{ $chart['day'] === 'Today' ? 'bg-sky-500' : 'bg-sky-200' }} hover:bg-sky-400 transition-all rounded-t cursor-pointer" style="height: {{ $chart['height'] }}%; min-height: 4px;"></div>
+                </div>
+                @endforeach
             </div>
             <div class="flex justify-between mt-2 text-xs text-slate-400">
-                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Today</span>
+                @foreach($chartData as $chart)
+                <span>{{ $chart['day'] }}</span>
+                @endforeach
             </div>
         </div>
 
-        {{-- Laporan Selisih Keuntungan --}}
+        {{-- Laporan Selisih Keuntungan (Hari Ini) --}}
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-            <h3 class="font-semibold text-slate-800 mb-4">Laporan Selisih Keuntungan</h3>
+            <h3 class="font-semibold text-slate-800 mb-4">Laporan Keuntungan (Hari Ini)</h3>
             <div class="space-y-4">
                 <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50">
                     <span class="text-slate-600">Pendapatan</span>
-                    <span class="font-semibold text-slate-800">Rp 12.450.000</span>
+                    <span class="font-semibold text-slate-800">Rp {{ number_format($revenueToday, 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50">
                     <span class="text-slate-600">Modal (HPP)</span>
-                    <span class="font-semibold text-slate-800">Rp 9.200.000</span>
+                    <span class="font-semibold text-slate-800">Rp {{ number_format($costToday, 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between items-center p-3 rounded-lg bg-emerald-50 border border-emerald-100">
                     <span class="font-medium text-emerald-700">Keuntungan Bersih</span>
-                    <span class="font-bold text-emerald-600">Rp 3.250.000</span>
+                    <span class="font-bold text-emerald-600">Rp {{ number_format($profitToday, 0, ',', '.') }}</span>
                 </div>
             </div>
         </div>
 
         {{-- Barang Paling Sering Dibeli --}}
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 lg:col-span-2">
-            <h3 class="font-semibold text-slate-800 mb-4">Barang Paling Sering Dibeli</h3>
+            <h3 class="font-semibold text-slate-800 mb-4">Barang Paling Sering Dibeli (Sepanjang Waktu)</h3>
             <div class="space-y-3">
+                @forelse($topProducts as $name => $qty)
                 <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50">
-                    <span class="font-medium text-slate-700">Kopi Sachet Premium</span>
-                    <span class="text-sm text-slate-500">156 sold</span>
+                    <span class="font-medium text-slate-700">{{ $name }}</span>
+                    <span class="text-sm text-slate-500">{{ $qty }} sold</span>
                 </div>
-                <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50">
-                    <span class="font-medium text-slate-700">Susu UHT 1L</span>
-                    <span class="text-sm text-slate-500">98 sold</span>
-                </div>
-                <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50">
-                    <span class="font-medium text-slate-700">Mie Instan</span>
-                    <span class="text-sm text-slate-500">87 sold</span>
-                </div>
-                <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50">
-                    <span class="font-medium text-slate-700">Snack Keripik</span>
-                    <span class="text-sm text-slate-500">72 sold</span>
-                </div>
-                <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50">
-                    <span class="font-medium text-slate-700">Aqua Gelas</span>
-                    <span class="text-sm text-slate-500">65 sold</span>
-                </div>
+                @empty
+                <p class="text-sm text-slate-500 text-center py-4">Belum ada data penjualan.</p>
+                @endforelse
             </div>
         </div>
     </div>
@@ -132,26 +123,28 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Riwayat Transaksi Penjualan --}}
         <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-            <h3 class="font-semibold text-slate-800 mb-4">Riwayat Transaksi Penjualan</h3>
+            <h3 class="font-semibold text-slate-800 mb-4">5 Transaksi Terakhir</h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="text-left text-slate-500 border-b border-slate-100">
                             <th class="pb-3 font-medium">ID</th>
                             <th class="pb-3 font-medium">Time</th>
-                            <th class="pb-3 font-medium">Items</th>
                             <th class="pb-3 font-medium">Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach(['TRX-2847', 'TRX-2846', 'TRX-2845', 'TRX-2844', 'TRX-2843'] as $i => $id)
+                        @forelse($recentTransactions as $sale)
                         <tr class="border-b border-slate-50 hover:bg-slate-50">
-                            <td class="py-3 font-mono text-slate-700">{{ $id }}</td>
-                            <td class="py-3 text-slate-600">{{ now()->subMinutes($i * 12)->format('H:i') }}</td>
-                            <td class="py-3 text-slate-600">{{ 3 + $i }} items</td>
-                            <td class="py-3 font-medium text-slate-800">Rp {{ number_format(45000 + $i * 12500, 0, ',', '.') }}</td>
+                            <td class="py-3 font-mono text-slate-700">TRX-{{ $sale->id }}</td>
+                            <td class="py-3 text-slate-600">{{ $sale->created_at->format('d/m H:i') }}</td>
+                            <td class="py-3 font-medium text-slate-800">Rp {{ number_format($sale->grand_total ?? $sale->total_amount ?? 0, 0, ',', '.') }}</td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="3" class="py-4 text-center text-slate-500">Belum ada transaksi.</td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -160,21 +153,17 @@
         {{-- Stok Perlu Ditambahkan --}}
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <h3 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-amber-500"></span> Stok Perlu Ditambahkan
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span> Stok Menipis
             </h3>
-            <div class="space-y-2">
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+                @forelse($lowStockItems as $inv)
                 <div class="p-2 rounded-lg bg-amber-50 border border-amber-100">
-                    <p class="font-medium text-slate-700 text-sm">Teh Botol 350ml</p>
-                    <p class="text-xs text-amber-700">Stock: 5 pcs</p>
+                    <p class="font-medium text-slate-700 text-sm">{{ $inv->product->name ?? 'Produk Dihapus' }}</p>
+                    <p class="text-xs text-amber-700">Sisa Stok: {{ $inv->current_stock }} pcs</p>
                 </div>
-                <div class="p-2 rounded-lg bg-amber-50 border border-amber-100">
-                    <p class="font-medium text-slate-700 text-sm">Roti Tawar</p>
-                    <p class="text-xs text-amber-700">Stock: 3 pcs</p>
-                </div>
-                <div class="p-2 rounded-lg bg-amber-50 border border-amber-100">
-                    <p class="font-medium text-slate-700 text-sm">Tissue 2 Ply</p>
-                    <p class="text-xs text-amber-700">Stock: 8 pcs</p>
-                </div>
+                @empty
+                <p class="text-sm text-slate-500 text-center py-4">Semua stok aman terkendali.</p>
+                @endforelse
             </div>
         </div>
     </div>

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model; // 🟢 Wajib MongoDB
 
 class Inventory extends Model
 {
+    protected $connection = 'mongodb';    
+    protected $collection = 'inventories'; // <-- TAMBAHAN: Nama collection di MongoDB
+
     protected $fillable = [
         'product_id',
         'current_stock',

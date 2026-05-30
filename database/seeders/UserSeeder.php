@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
+use App\Models\User; 
 
 class UserSeeder extends Seeder
 {
@@ -38,6 +38,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $user) {
+            // Data akan langsung ditembakkan ke collection 'users' di MongoDB Atlas
             User::updateOrCreate(['email' => $user['email']], $user);
         }
     }
