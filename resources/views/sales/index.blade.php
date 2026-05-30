@@ -86,20 +86,21 @@
 </div>
 
 @push('scripts')
+{{-- Memanggil CDN SweetAlert2 --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 function posApp() {
     return {
         search: '',
         cart: [],
         
-        // 🟢 FUNGSI BARU: Menghitung sisa stok dinamis
         getRemainingStock(id, initialStock) {
             const cartItem = this.cart.find(c => c.id === id);
             const qtyInCart = cartItem ? cartItem.qty : 0;
             return initialStock - qtyInCart;
         },
 
-        // 🟢 LOGIKA BARU: Mencegah penambahan jika stok habis
         addToCart(id, name, price, maxStock) {
             const idx = this.cart.findIndex(c => c.id === id);
             
@@ -107,22 +108,24 @@ function posApp() {
                 if (this.cart[idx].qty < maxStock) {
                     this.cart[idx].qty++;
                 } else {
-                    alert('Tidak bisa menambah! Sisa stok ' + name + ' tidak mencukupi.');
+                    // 🟢 Ubah alert biasa jadi SweetAlert
+                    Swal.fire({ icon: 'warning', title: 'Stok Terbatas', text: `Sisa stok ${name} tidak mencukupi.` });
                 }
             } else {
                 if (maxStock > 0) {
                     this.cart.push({ id, name, price, qty: 1, maxStock });
                 } else {
-                    alert('Stok ' + name + ' sedang kosong!');
+                    // 🟢 Ubah alert biasa jadi SweetAlert
+                    Swal.fire({ icon: 'error', title: 'Stok Kosong', text: `Stok ${name} sedang kosong!` });
                 }
             }
         },
 
-        // 🟢 LOGIKA BARU: Tombol plus (+) di keranjang juga dicegah jika melebihi stok
         updateQty(i, delta) {
             const newQty = this.cart[i].qty + delta;
             if (newQty > this.cart[i].maxStock) {
-                alert('Tidak bisa menambah! Mencapai batas maksimal stok gudang.');
+                // 🟢 Ubah alert biasa jadi SweetAlert
+                Swal.fire({ icon: 'warning', title: 'Batas Maksimal', text: 'Mencapai batas maksimal stok gudang.' });
                 return;
             }
             this.cart[i].qty = newQty;
@@ -144,7 +147,17 @@ function posApp() {
             
             const btn = document.querySelector('button[disabled]') || document.querySelector('button');
             const originalText = btn.innerHTML;
-            btn.innerHTML = 'Processing...';
+            
+            // 🟢 Tampilkan Loading SweetAlert
+            Swal.fire({
+                title: 'Memproses Transaksi...',
+                text: 'Mohon tunggu sebentar...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
             btn.disabled = true;
 
             try {
@@ -164,16 +177,38 @@ function posApp() {
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert('Transaksi Berhasil!\nTotal Pembayaran: Rp ' + this.formatNumber(this.total));
-                    this.cart = [];
-                    window.location.reload(); 
+                    // 🟢 Transaksi Sukses dengan SweetAlert
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Transaksi Berhasil!',
+                        text: 'Total Pembayaran: Rp ' + this.formatNumber(this.total),
+                        confirmButtonText: 'Tutup & Lanjutkan',
+                        confirmButtonColor: '#0ea5e9' // sky-500
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.cart = [];
+                            window.location.reload(); 
+                        }
+                    });
                 } else {
-                    alert('Transaksi Gagal: ' + (result.message || 'Error tidak diketahui'));
+                    // 🟢 Transaksi Gagal (Validasi Server)
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Transaksi Gagal!',
+                        text: result.message || 'Terjadi kesalahan tidak diketahui.',
+                        confirmButtonColor: '#ef4444' // red-500
+                    });
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                 }
             } catch (error) {
-                alert('Terjadi kesalahan jaringan.');
+                // 🟢 Gagal Koneksi
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Kesalahan Jaringan!',
+                    text: 'Gagal terhubung ke server. Periksa koneksi Anda.',
+                    confirmButtonColor: '#ef4444' // red-500
+                });
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
