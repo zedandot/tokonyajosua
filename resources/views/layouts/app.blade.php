@@ -70,7 +70,7 @@
             {{-- Nav links --}}
             <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
                 @php $role = Auth::check() ? Auth::user()->role : 'owner'; @endphp
-                <p class="px-4 py-2 text-xs text-slate-400 uppercase">Login sebagai {{ $role === 'owner' ? 'Owner' : ($role === 'cashier' ? 'Kasir' : 'Petugas Gudang') }}</p>
+                <p class="px-4 py-2 text-xs text-slate-400 uppercase">Login sebagai {{ $role === 'owner' ? 'Owner' : ($role === 'kasir' ? 'Kasir' : 'Petugas Gudang') }}</p>
 
                 <a href="{{ route('dashboard') }}" @click="sidebarOpen = false"
                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('dashboard') ? 'bg-sky-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
@@ -78,7 +78,8 @@
                     Dashboard
                 </a>
 
-                @if(in_array($role, ['owner', 'cashier']))
+                {{-- 🟢 PERBAIKAN: Menggunakan role 'kasir' --}}
+                @if(in_array($role, ['owner', 'kasir']))
                 <a href="{{ route('sales.index') }}" @click="sidebarOpen = false"
                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('sales.*') ? 'bg-sky-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -86,7 +87,8 @@
                 </a>
                 @endif
 
-                @if(in_array($role, ['owner', 'cashier', 'warehouse']))
+                {{-- 🟢 PERBAIKAN: Menggunakan role 'kasir' dan 'gudang' --}}
+                @if(in_array($role, ['owner', 'kasir', 'gudang']))
                 <a href="{{ route('products.index') }}" @click="sidebarOpen = false"
                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('products.*') ? 'bg-sky-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -94,7 +96,8 @@
                 </a>
                 @endif
 
-                @if(in_array($role, ['owner', 'warehouse']))
+                {{-- 🟢 PERBAIKAN: Menggunakan role 'gudang' --}}
+                @if(in_array($role, ['owner', 'gudang']))
                 <a href="{{ route('inventory.index') }}" @click="sidebarOpen = false"
                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('inventory.*') ? 'bg-sky-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
@@ -115,7 +118,6 @@
                 </a>
                 @endif
 
-                {{-- 🟢 Menu Settings telah dihapus dari sini --}}
                 <div class="pt-4 mt-4 border-t border-slate-700">
                     <a href="{{ route('logout') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-red-300 hover:bg-slate-800 hover:text-red-200 transition-colors mt-1">
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>

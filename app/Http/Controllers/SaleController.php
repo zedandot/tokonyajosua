@@ -25,7 +25,28 @@ class SaleController extends Controller
         return view('sales.index', compact('products'));
     }
 
-    // 2. Memproses Pembayaran dari JavaScript
+    // 🟢 FUNGSI BARU: Menyimpan keranjang ke session sementara
+    public function saveSession(Request $request)
+    {
+        session(['pos_cart' => $request->items, 'pos_total' => $request->total]);
+        return response()->json(['redirect' => route('sales.payment')]);
+    }
+
+    // 🟢 FUNGSI BARU: Menampilkan halaman form pembayaran
+    public function payment()
+    {
+        // Cegah akses jika keranjang kosong
+        if (!session()->has('pos_cart') || empty(session('pos_cart'))) {
+            return redirect()->route('sales.index')->with('error', 'Keranjang belanja kosong.');
+        }
+
+        $cart = session('pos_cart');
+        $total = session('pos_total');
+
+        return view('sales.payment', compact('cart', 'total'));
+    }
+
+    // 2. Memproses Pembayaran ke Database
     public function store(Request $request)
     {
         // Validasi data yang dikirim dari JS
@@ -35,17 +56,20 @@ class SaleController extends Controller
             'items.*.id' => 'required|exists:products,id',
             'items.*.qty' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric',
+            'payment_method' => 'nullable|string', // 🟢 Tambahan Validasi Metode
         ]);
 
-        // Gunakan Database Transaction agar jika ada error di tengah jalan, 
-        // uang dan stok tidak jadi terpotong (aman dari error setengah jalan).
+        // Gunakan Database Transaction
         try {
             DB::beginTransaction();
+
+            // 🟢 Tangkap metode pembayaran (Default: TUNAI)
+            $method = strtoupper($request->payment_method ?? 'TUNAI');
 
            // A. Buat Induk Transaksi (Nota)
             $sale = Sale::create([
                 'user_id' => auth()->id(), // Kasir yang bertugas
-                'invoice_number' => 'INV-' . date('YmdHis') . '-' . rand(10, 99), // <-- TAMBAHAN BARU: Generate otomatis
+                'invoice_number' => 'INV-' . date('YmdHis') . '-' . rand(10, 99),
                 'total_amount' => $request->total,
                 'status' => 'completed'
             ]);
@@ -78,12 +102,15 @@ class SaleController extends Controller
                         'quantity' => -$item['qty'], // Minus karena keluar
                         'stock_before' => $stockBefore,
                         'stock_after' => $stockAfter,
-                        'notes' => 'Sale #' . $sale->id,
+                        'notes' => 'Sale #' . $sale->id . ' via ' . $method, // 🟢 Rekam metode pembayaran
                     ]);
                 }
             }
 
             DB::commit();
+
+            // Bersihkan session keranjang setelah berhasil
+            session()->forget(['pos_cart', 'pos_total']);
 
             // Balas ke JavaScript bahwa pembayaran sukses
             return response()->json(['success' => true, 'message' => 'Transaksi berhasil dicatat!']);

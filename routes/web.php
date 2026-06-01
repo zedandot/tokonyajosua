@@ -44,6 +44,8 @@ Route::middleware('auth')->group(function () {
 
     // Owner + Kasir: POS / Sales
     Route::middleware(CheckRole::class.':owner,kasir')->group(function () {
+        Route::post('/sales/checkout-session', [SaleController::class, 'saveSession'])->name('sales.checkout_session');
+        Route::get('/sales/payment', [SaleController::class, 'payment'])->name('sales.payment');
         Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
         Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
     });

@@ -1,4 +1,4 @@
-\@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Users')
 
@@ -39,7 +39,6 @@
                         <th class="px-6 py-4 text-left font-semibold">Name</th>
                         <th class="px-6 py-4 text-left font-semibold">Email</th>
                         <th class="px-6 py-4 text-left font-semibold">Role</th>
-                        {{-- 🟢 TAMBAHAN: Header Action --}}
                         <th class="px-6 py-4 text-right font-semibold">Action</th>
                     </tr>
                 </thead>
@@ -59,12 +58,14 @@
                                 <span class="px-2 py-1 rounded bg-slate-100 text-slate-700 text-xs font-medium">{{ $user->role }}</span>
                             @endif
                         </td>
-                        {{-- 🟢 TAMBAHAN: Tombol Hapus --}}
+                        {{-- 🟢 PERBAIKAN: Tombol Hapus dengan SweetAlert2 --}}
                         <td class="px-6 py-4 text-right">
-                            <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user {{ $user->name }}?');">
+                            <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline-block">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="p-2 rounded-lg bg-red-50 hover:bg-red-100 hover:text-red-600 text-red-400 transition-colors focus:ring-2 focus:ring-red-200" title="Pecat User">
+                                <button type="button" 
+                                        onclick="konfirmasiHapus(this, '{{ addslashes($user->name) }}')"
+                                        class="p-2 rounded-lg bg-red-50 hover:bg-red-100 hover:text-red-600 text-red-400 transition-colors focus:ring-2 focus:ring-red-200" title="Pecat User">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </form>
@@ -89,4 +90,27 @@
         </ul>
     </div>
 </div>
+
+{{-- 🟢 Senjata Tambahan: Script SweetAlert2 --}}
+@push('scripts')
+<script>
+function konfirmasiHapus(button, namaUser) {
+    Swal.fire({
+        title: 'Hapus Akses?',
+        text: "Apakah Anda yakin ingin mencabut akses dan menghapus user '" + namaUser + "'?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444', 
+        cancelButtonColor: '#94a3b8',  
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.closest('form').submit();
+        }
+    });
+}
+</script>
+@endpush
 @endsection

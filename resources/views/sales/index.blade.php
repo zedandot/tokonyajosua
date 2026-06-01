@@ -86,9 +86,6 @@
 </div>
 
 @push('scripts')
-{{-- Memanggil CDN SweetAlert2 --}}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
 function posApp() {
     return {
@@ -108,14 +105,12 @@ function posApp() {
                 if (this.cart[idx].qty < maxStock) {
                     this.cart[idx].qty++;
                 } else {
-                    // 🟢 Ubah alert biasa jadi SweetAlert
                     Swal.fire({ icon: 'warning', title: 'Stok Terbatas', text: `Sisa stok ${name} tidak mencukupi.` });
                 }
             } else {
                 if (maxStock > 0) {
                     this.cart.push({ id, name, price, qty: 1, maxStock });
                 } else {
-                    // 🟢 Ubah alert biasa jadi SweetAlert
                     Swal.fire({ icon: 'error', title: 'Stok Kosong', text: `Stok ${name} sedang kosong!` });
                 }
             }
@@ -124,7 +119,6 @@ function posApp() {
         updateQty(i, delta) {
             const newQty = this.cart[i].qty + delta;
             if (newQty > this.cart[i].maxStock) {
-                // 🟢 Ubah alert biasa jadi SweetAlert
                 Swal.fire({ icon: 'warning', title: 'Batas Maksimal', text: 'Mencapai batas maksimal stok gudang.' });
                 return;
             }
@@ -148,10 +142,8 @@ function posApp() {
             const btn = document.querySelector('button[disabled]') || document.querySelector('button');
             const originalText = btn.innerHTML;
             
-            // 🟢 Tampilkan Loading SweetAlert
             Swal.fire({
-                title: 'Memproses Transaksi...',
-                text: 'Mohon tunggu sebentar...',
+                title: 'Menyiapkan Pembayaran...',
                 allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
@@ -161,7 +153,8 @@ function posApp() {
             btn.disabled = true;
 
             try {
-                const response = await fetch('{{ route('sales.store') }}', {
+                // 🟢 UBAH: Arahkan ke rute pembuatan session
+                const response = await fetch('{{ route('sales.checkout_session') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -177,37 +170,24 @@ function posApp() {
                 const result = await response.json();
 
                 if (response.ok) {
-                    // 🟢 Transaksi Sukses dengan SweetAlert
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Transaksi Berhasil!',
-                        text: 'Total Pembayaran: Rp ' + this.formatNumber(this.total),
-                        confirmButtonText: 'Tutup & Lanjutkan',
-                        confirmButtonColor: '#0ea5e9' // sky-500
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.cart = [];
-                            window.location.reload(); 
-                        }
-                    });
+                    // 🟢 Jika berhasil masuk session, redirect ke halaman pembayaran
+                    window.location.href = result.redirect;
                 } else {
-                    // 🟢 Transaksi Gagal (Validasi Server)
                     Swal.fire({
                         icon: 'error',
-                        title: 'Transaksi Gagal!',
-                        text: result.message || 'Terjadi kesalahan tidak diketahui.',
-                        confirmButtonColor: '#ef4444' // red-500
+                        title: 'Gagal Memproses!',
+                        text: result.message || 'Terjadi kesalahan saat membuat sesi pembayaran.',
+                        confirmButtonColor: '#ef4444'
                     });
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                 }
             } catch (error) {
-                // 🟢 Gagal Koneksi
                 Swal.fire({
                     icon: 'error',
                     title: 'Kesalahan Jaringan!',
-                    text: 'Gagal terhubung ke server. Periksa koneksi Anda.',
-                    confirmButtonColor: '#ef4444' // red-500
+                    text: 'Gagal terhubung ke server.',
+                    confirmButtonColor: '#ef4444'
                 });
                 btn.innerHTML = originalText;
                 btn.disabled = false;
