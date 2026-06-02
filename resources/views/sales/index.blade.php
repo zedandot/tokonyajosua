@@ -10,75 +10,122 @@
         <p class="text-slate-500 text-sm mt-1">Cashier interface — Transaction #TRX-{{ date('His') }}</p>
     </div>
 
-    {{-- POS Grid: stacks on mobile, side-by-side on lg+ --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {{-- Product Search & Grid --}}
+        
+        {{-- AREA KIRI: Pencarian & Daftar Barang (LIST VIEW) --}}
         <div class="lg:col-span-2 flex flex-col bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-4 border-b border-slate-100">
-                <input type="search" x-model="search" placeholder="Search products..."
-                    class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-            </div>
-            <div class="p-4">
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                   @foreach($products as $p)
-                    <button @click="addToCart('{{ $p->id }}', '{{ addslashes($p->name) }}', {{ $p->selling_price }}, {{ $p->inventory->current_stock ?? 0 }})"
-                        class="flex flex-col items-center p-3 rounded-lg border border-slate-200 hover:border-sky-400 hover:bg-sky-50 active:scale-95 transition-all text-left">
-                        <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center mb-2">
-                            <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                        </div>
-                        <span class="text-xs sm:text-sm font-medium text-slate-700 truncate w-full text-center">{{ $p->name }}</span>
-                        <span class="text-xs text-sky-600 font-semibold mt-0.5">Rp {{ number_format($p->selling_price, 0, ',', '.') }}</span>
-                        <span class="text-[10px] mt-1 font-medium" 
-                              :class="getRemainingStock('{{ $p->id }}', {{ $p->inventory->current_stock ?? 0 }}) === 0 ? 'text-red-500' : 'text-slate-400'"
-                              x-text="'Stok: ' + getRemainingStock('{{ $p->id }}', {{ $p->inventory->current_stock ?? 0 }})">
-                        </span>
+            
+            {{-- Bagian Atas: Pencarian & Filter Kategori --}}
+            <div class="p-4 border-b border-slate-100 bg-white">
+                <input type="search" x-model="search" placeholder="Masukkan nama barang atau ID..."
+                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow bg-slate-50">
+                
+                {{-- Baris Tombol Filter Kategori --}}
+                <div class="flex gap-2 overflow-x-auto pt-4 pb-1 hide-scrollbar" style="scrollbar-width: none;">
+                    <button @click="selectedCategory = 'all'"
+                            class="px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all border"
+                            :class="selectedCategory === 'all' ? 'bg-sky-500 text-white border-sky-500 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
+                        Semua Kategori
+                    </button>
+                    @foreach($categories as $c)
+                    <button @click="selectedCategory = '{{ $c->id }}'"
+                            class="px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all border"
+                            :class="selectedCategory === '{{ $c->id }}' ? 'bg-sky-500 text-white border-sky-500 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
+                        {{ $c->name }}
                     </button>
                     @endforeach
                 </div>
             </div>
+
+            {{-- 🟢 Header Kolom List --}}
+            <div class="grid grid-cols-12 gap-2 px-5 py-3 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <div class="col-span-6">Info Produk</div>
+                <div class="col-span-3 text-right">Harga</div>
+                <div class="col-span-3 text-right">Stok</div>
+            </div>
+
+            {{-- 🟢 AREA BAWAH: Daftar Produk (Gaya Mobile List) --}}
+            <div class="overflow-y-auto max-h-[600px] divide-y divide-slate-100">
+                @foreach($products as $p)
+                <button 
+                    x-show="showProduct(@js($p->name), @js($p->category_id ?? ''))" 
+                    x-transition.opacity.duration.200ms
+                    @click="addToCart('{{ $p->id }}', @js($p->name), {{ $p->selling_price }}, {{ $p->inventory->current_stock ?? 0 }})"
+                    class="w-full grid grid-cols-12 gap-2 px-5 py-4 items-center hover:bg-sky-50 active:bg-sky-100 transition-colors text-left group bg-white">
+                    
+                    {{-- Info Produk (Kiri) --}}
+                    <div class="col-span-6 flex flex-col pr-2">
+                        <span class="text-sm font-bold text-slate-800 group-hover:text-sky-700 transition-colors">{{ $p->name }}</span>
+                        <span class="text-[11px] text-slate-400 mt-1">{{ $p->category->name ?? 'Umum' }}</span>
+                    </div>
+
+                    {{-- Harga (Tengah) --}}
+                    <div class="col-span-3 text-right">
+                        <span class="text-sm font-bold text-sky-600">Rp {{ number_format($p->selling_price, 0, ',', '.') }}</span>
+                    </div>
+
+                    {{-- Stok (Kanan) --}}
+                    <div class="col-span-3 text-right">
+                        <span class="text-sm font-bold"
+                              :class="getRemainingStock('{{ $p->id }}', {{ $p->inventory->current_stock ?? 0 }}) > 0 ? 'text-emerald-500' : 'text-red-500'"
+                              x-text="getRemainingStock('{{ $p->id }}', {{ $p->inventory->current_stock ?? 0 }}) + ' pcs'">
+                        </span>
+                    </div>
+                </button>
+                @endforeach
+
+                {{-- Teks jika tidak ada barang --}}
+                <div x-show="cart.length === -1" class="p-8 text-center text-slate-400 text-sm hidden">
+                    Produk tidak ditemukan.
+                </div>
+            </div>
         </div>
 
-        {{-- Cart Panel --}}
-        <div class="flex flex-col bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-4 border-b border-slate-100 bg-slate-50">
+        {{-- AREA KANAN: Cart Panel --}}
+        <div class="flex flex-col bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden lg:sticky lg:top-6 lg:h-[calc(100vh-2rem)]">
+            <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                 <h3 class="font-semibold text-slate-800">Shopping Cart</h3>
+                <span class="bg-sky-100 text-sky-700 text-xs font-bold px-2.5 py-1 rounded-full" x-text="cart.length + ' Item'"></span>
             </div>
             <div class="flex-1 p-4 min-h-[180px] max-h-80 lg:max-h-none overflow-y-auto">
                 <template x-if="cart.length === 0">
-                    <div class="flex flex-col items-center justify-center h-40 text-slate-400">
-                        <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                        <p class="text-sm">Cart is empty</p>
-                        <p class="text-xs mt-1">Click products to add</p>
+                    <div class="flex flex-col items-center justify-center h-full text-slate-400 py-10">
+                        <svg class="w-12 h-12 mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <p class="text-sm font-medium">Keranjang masih kosong</p>
+                        <p class="text-xs mt-1">Pilih barang dari daftar produk</p>
                     </div>
                 </template>
-                <div class="space-y-2" x-show="cart.length > 0">
+                <div class="space-y-3" x-show="cart.length > 0">
                     <template x-for="(item, i) in cart" :key="item.id + '-' + i">
-                        <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
-                            <div class="min-w-0 mr-2">
-                                <p class="font-medium text-slate-700 text-sm truncate" x-text="item.name"></p>
-                                <p class="text-xs text-slate-500">Rp <span x-text="formatNumber(item.price)"></span> × <span x-text="item.qty"></span></p>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <div class="min-w-0 mr-3 flex-1">
+                                <p class="font-bold text-slate-800 text-sm truncate" x-text="item.name"></p>
+                                <p class="text-xs text-sky-600 font-semibold mt-0.5">Rp <span x-text="formatNumber(item.price)"></span></p>
                             </div>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <button @click="updateQty(i, -1)" class="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 font-bold">−</button>
-                                <span class="w-6 text-center font-medium text-slate-700 text-sm" x-text="item.qty"></span>
-                                <button @click="updateQty(i, 1)" class="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 font-bold">+</button>
-                                <button @click="removeItem(item.id)" class="w-7 h-7 rounded bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center ml-1 transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                </button>
+                            <div class="flex items-center gap-2 shrink-0 bg-white border border-slate-200 rounded-lg p-1">
+                                <button @click="updateQty(i, -1)" class="w-7 h-7 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-600 font-bold transition-colors">−</button>
+                                <span class="w-5 text-center font-bold text-slate-800 text-sm" x-text="item.qty"></span>
+                                <button @click="updateQty(i, 1)" class="w-7 h-7 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-600 font-bold transition-colors">+</button>
                             </div>
+                            <button @click="removeItem(item.id)" class="w-8 h-8 rounded-lg hover:bg-red-100 text-red-500 flex items-center justify-center ml-2 transition-colors shrink-0" title="Hapus Barang">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
                         </div>
                     </template>
                 </div>
             </div>
-            <div class="p-4 border-t border-slate-100 space-y-3">
-                <div class="flex justify-between items-center text-lg">
-                    <span class="font-medium text-slate-700">Total</span>
-                    <span class="font-bold text-slate-800">Rp <span x-text="formatNumber(total)"></span></span>
+            
+            {{-- Panel Total & Pay Now --}}
+            <div class="p-5 border-t border-slate-100 bg-white">
+                <div class="flex justify-between items-end mb-4">
+                    <span class="font-medium text-slate-500">Total Pembayaran</span>
+                    <span class="font-black text-slate-800 text-2xl tracking-tight">Rp <span x-text="formatNumber(total)"></span></span>
                 </div>
                 <button @click="checkout()"
-                    class="w-full py-3 rounded-lg bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-semibold transition-colors disabled:opacity-50"
+                    class="w-full py-4 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-bold text-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none flex justify-center items-center gap-2"
                     :disabled="cart.length === 0">
-                    Pay Now
+                    <span>Pay Now</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </button>
             </div>
         </div>
@@ -86,12 +133,21 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 function posApp() {
     return {
         search: '',
+        selectedCategory: 'all',
         cart: [],
         
+        showProduct(name, categoryId) {
+            const matchCategory = this.selectedCategory === 'all' || this.selectedCategory == categoryId;
+            const matchSearch = name.toLowerCase().includes(this.search.toLowerCase());
+            return matchCategory && matchSearch;
+        },
+
         getRemainingStock(id, initialStock) {
             const cartItem = this.cart.find(c => c.id === id);
             const qtyInCart = cartItem ? cartItem.qty : 0;
@@ -153,7 +209,6 @@ function posApp() {
             btn.disabled = true;
 
             try {
-                // 🟢 UBAH: Arahkan ke rute pembuatan session
                 const response = await fetch('{{ route('sales.checkout_session') }}', {
                     method: 'POST',
                     headers: {
@@ -170,7 +225,6 @@ function posApp() {
                 const result = await response.json();
 
                 if (response.ok) {
-                    // 🟢 Jika berhasil masuk session, redirect ke halaman pembayaran
                     window.location.href = result.redirect;
                 } else {
                     Swal.fire({
