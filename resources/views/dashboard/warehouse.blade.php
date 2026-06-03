@@ -3,6 +3,14 @@
 @section('title', 'Dashboard Petugas Gudang')
 
 @section('content')
+
+{{-- Menghitung jumlah barang yang stoknya rendah/habis secara otomatis --}}
+@php
+    $lowStockCount = $inventories->filter(function($inv) {
+        return $inv->current_stock <= $inv->minimum_stock;
+    })->count();
+@endphp
+
 <div class="space-y-8">
     <div>
         <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Dashboard Petugas Gudang</h1>
@@ -37,7 +45,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500">Stok Rendah</p>
-                    <p class="text-2xl font-bold text-amber-600 mt-1">12</p>
+                    <p class="text-2xl font-bold text-amber-600 mt-1">{{ $lowStockCount }}</p>
                     <p class="text-xs text-amber-600 mt-1">Perlu restock</p>
                 </div>
                 <div class="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center">
@@ -62,22 +70,29 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $items = [['name' => 'Kopi Sachet Premium', 'sku' => 'KOP-001', 'stock' => 120, 'min' => 50], ['name' => 'Susu UHT 1L', 'sku' => 'SUS-002', 'stock' => 45, 'min' => 30], ['name' => 'Teh Botol 350ml', 'sku' => 'TEH-003', 'stock' => 5, 'min' => 20], ['name' => 'Mie Instan', 'sku' => 'MIE-004', 'stock' => 200, 'min' => 100], ['name' => 'Roti Tawar', 'sku' => 'ROT-005', 'stock' => 3, 'min' => 15]]; @endphp
-                    @foreach($items as $i)
+                    @forelse($inventories as $inv)
                     <tr class="border-t border-slate-100 hover:bg-slate-50">
-                        <td class="px-6 py-4 font-medium text-slate-800">{{ $i['name'] }}</td>
-                        <td class="px-6 py-4 text-slate-600 font-mono">{{ $i['sku'] }}</td>
-                        <td class="px-6 py-4 text-right {{ $i['stock'] <= $i['min'] ? 'text-amber-600 font-semibold' : 'text-slate-700' }}">{{ $i['stock'] }} pcs</td>
-                        <td class="px-6 py-4 text-right text-slate-600">{{ $i['min'] }} pcs</td>
+                        <td class="px-6 py-4 font-medium text-slate-800">{{ $inv->product ? $inv->product->name : 'Produk Tidak Ditemukan' }}</td>
+                        <td class="px-6 py-4 text-slate-600 font-mono">{{ $inv->product ? $inv->product->sku : '-' }}</td>
+                        <td class="px-6 py-4 text-right {{ $inv->current_stock <= $inv->minimum_stock ? 'text-amber-600 font-semibold' : 'text-slate-700' }}">{{ $inv->current_stock }} pcs</td>
+                        <td class="px-6 py-4 text-right text-slate-600">{{ $inv->minimum_stock }} pcs</td>
                         <td class="px-6 py-4 text-center">
-                            @if($i['stock'] <= $i['min'])
-                            <span class="px-2 py-1 rounded bg-amber-100 text-amber-700 text-xs font-medium">Perlu Restock</span>
+                            @if($inv->current_stock <= 0)
+                                <span class="px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-medium">Habis</span>
+                            @elseif($inv->current_stock <= $inv->minimum_stock)
+                                <span class="px-2 py-1 rounded bg-amber-100 text-amber-700 text-xs font-medium">Perlu Restock</span>
                             @else
-                            <span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 text-xs font-medium">Aman</span>
+                                <span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 text-xs font-medium">Aman</span>
                             @endif
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-slate-500">
+                            Belum ada data inventori di gudang.
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -86,23 +101,43 @@
         </div>
     </div>
 
-    {{-- Riwayat Barang Masuk --}}
+    {{-- Riwayat Barang Masuk (Data Asli dari Pembaruan Terakhir) --}}
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <h3 class="px-6 py-4 font-semibold text-slate-800 border-b border-slate-100">Riwayat Barang Masuk</h3>
+        <h3 class="px-6 py-4 font-semibold text-slate-800 border-b border-slate-100">Riwayat Update Stok Terakhir</h3>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-slate-50 text-slate-600">
-                        <th class="px-6 py-4 text-left font-semibold">Tanggal</th>
+                        <th class="px-6 py-4 text-left font-semibold">Waktu Pembaruan</th>
                         <th class="px-6 py-4 text-left font-semibold">Produk</th>
-                        <th class="px-6 py-4 text-left font-semibold">Tipe</th>
-                        <th class="px-6 py-4 text-right font-semibold">Qty</th>
-                        <th class="px-6 py-4 text-left font-semibold">Keterangan</th>
+                        <th class="px-6 py-4 text-left font-semibold">Stok Terkini</th>
+                        <th class="px-6 py-4 text-center font-semibold">Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="border-t border-slate-100"><td class="px-6 py-4">10 Mar 2025 14:30</td><td class="px-6 py-4">Susu UHT 1L</td><td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-xs">Masuk</span></td><td class="px-6 py-4 text-right">+50</td><td class="px-6 py-4 text-slate-500">Restock</td></tr>
-                    <tr class="border-t border-slate-100"><td class="px-6 py-4">10 Mar 2025 09:00</td><td class="px-6 py-4">Mie Instan</td><td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-xs">Masuk</span></td><td class="px-6 py-4 text-right">+100</td><td class="px-6 py-4 text-slate-500">Pembelian</td></tr>
+                    {{-- Menyortir data inventory berdasarkan waktu update terbaru, ambil 5 teratas --}}
+                    @forelse($inventories->sortByDesc('updated_at')->take(5) as $movement)
+                    <tr class="border-t border-slate-100 hover:bg-slate-50">
+                        <td class="px-6 py-4 text-slate-600">
+                            {{ \Carbon\Carbon::parse($movement->updated_at)->timezone('Asia/Jakarta')->format('d M Y H:i') }}
+                        </td>
+                        <td class="px-6 py-4 font-medium text-slate-800">
+                            {{ $movement->product->name }}
+                        </td>
+                        <td class="px-6 py-4 text-slate-600 font-mono">
+                            {{ $movement->current_stock }} pcs
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="px-2 py-1 rounded bg-sky-100 text-sky-700 text-xs font-medium">Diperbarui</span>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-slate-500">
+                            Belum ada riwayat pembaruan stok di gudang.
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

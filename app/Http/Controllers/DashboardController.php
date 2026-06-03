@@ -21,7 +21,12 @@ class DashboardController extends Controller
         } elseif ($role === 'kasir') {
             return view('dashboard.cashier');
         } elseif ($role === 'gudang') {
-            return view('dashboard.warehouse');
+            // 🚀 KODE DIPERBARUI: Ambil data gudang, lalu saring (buang) data yang produk induknya sudah hilang
+            $inventories = Inventory::with('product')->get()->filter(function ($inv) {
+                return $inv->product !== null;
+            });
+            
+            return view('dashboard.warehouse', compact('inventories'));
         }
 
         return redirect()->route('login');
@@ -58,7 +63,11 @@ class DashboardController extends Controller
         }
 
         // 3. Hitung Modal Belanja (Total HPP seluruh barang di gudang)
-        $inventories = Inventory::with('product')->get();
+        // 🚀 KODE DIPERBARUI: Filter juga dipasang di sini agar hitungan Owner tidak meleset
+        $inventories = Inventory::with('product')->get()->filter(function ($inv) {
+            return $inv->product !== null;
+        });
+        
         $totalCapital = 0;
         $lowStockCount = 0;
         $lowStockItems = [];
