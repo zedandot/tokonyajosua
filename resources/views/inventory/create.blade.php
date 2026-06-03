@@ -18,7 +18,10 @@
                 <select name="product_id" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none">
                     <option value="">-- Pilih Produk --</option>
                     @foreach($products as $product)
-                        <option value="{{ $product->id }}">{{ $product->sku }} | {{ $product->name }} (Sisa: {{ $product->current_stock }})</option>
+                        {{-- 🚀 PERBAIKAN: Mengambil data stok dari relasi tabel inventory --}}
+                        <option value="{{ $product->id }}">
+                            {{ $product->sku }} | {{ $product->name }} (Sisa: {{ $product->inventory->current_stock ?? 0 }})
+                        </option>
                     @endforeach
                 </select>
             </div>

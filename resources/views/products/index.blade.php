@@ -10,8 +10,8 @@
             <p class="text-slate-500 text-sm mt-1">Manage your product catalog</p>
         </div>
         
-        {{-- 🚀 AKSES TERBATAS: Tombol tambah hanya untuk Owner --}}
-        @if(auth()->user()->role === 'owner')
+        {{-- 🚀 Tombol Add Product HANYA untuk Owner & Gudang --}}
+        @if(in_array(auth()->user()->role, ['owner', 'gudang']))
         <a href="{{ route('products.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium shadow-sm transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Add Product
@@ -48,9 +48,21 @@
                         <th class="px-6 py-4 text-left font-semibold">Product Name</th>
                         <th class="px-6 py-4 text-left font-semibold">Category</th>
                         <th class="px-6 py-4 text-right font-semibold">Current Stock</th>
-                        <th class="px-6 py-4 text-right font-semibold">Purchase Price</th>
-                        <th class="px-6 py-4 text-right font-semibold">Selling Price</th>
-                        <th class="px-6 py-4 text-center font-semibold">Actions</th>
+                        
+                        {{-- Header Harga Modal HANYA Owner --}}
+                        @if(auth()->user()->role === 'owner')
+                            <th class="px-6 py-4 text-right font-semibold">Purchase Price</th>
+                        @endif
+                        
+                        {{-- Header Harga Jual untuk Owner & Kasir --}}
+                        @if(in_array(auth()->user()->role, ['owner', 'kasir']))
+                            <th class="px-6 py-4 text-right font-semibold">Selling Price</th>
+                        @endif
+                        
+                        {{-- Header Actions untuk Owner & Gudang --}}
+                        @if(in_array(auth()->user()->role, ['owner', 'gudang']))
+                            <th class="px-6 py-4 text-center font-semibold">Actions</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -68,7 +80,6 @@
                                 $stock = $item->inventory->current_stock ?? 0;
                                 $min = $item->inventory->minimum_stock ?? 0;
                             @endphp
-                            
                             @if($stock === 0)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 border border-red-200">Habis</span>
                             @else
@@ -79,31 +90,48 @@
                             <span class="text-slate-400 text-xs font-medium ml-1">pcs</span>
                         </td>
                         
-                        {{-- 🚀 AKSES DATA FINANSIAL HANYA UNTUK OWNER --}}
+                        {{-- Data Harga Modal HANYA Owner --}}
+                        @if(auth()->user()->role === 'owner')
                         <td class="px-6 py-4 text-right text-slate-600">
-                            {{ auth()->user()->role === 'owner' ? 'Rp ' . number_format($item->purchase_price, 0, ',', '.') : '---' }}
+                            Rp {{ number_format($item->purchase_price, 0, ',', '.') }}
                         </td>
-                        <td class="px-6 py-4 text-right font-black text-sky-600">
-                            {{ auth()->user()->role === 'owner' ? 'Rp ' . number_format($item->selling_price, 0, ',', '.') : '---' }}
-                        </td>
+                        @endif
                         
+                        {{-- Data Harga Jual untuk Owner & Kasir --}}
+                        @if(in_array(auth()->user()->role, ['owner', 'kasir']))
+                        <td class="px-6 py-4 text-right font-black text-sky-600">
+                            Rp {{ number_format($item->selling_price, 0, ',', '.') }}
+                        </td>
+                        @endif
+                        
+                        {{-- Data Actions untuk Owner & Gudang --}}
+                        @if(in_array(auth()->user()->role, ['owner', 'gudang']))
                         <td class="px-6 py-4 text-center whitespace-nowrap">
+                            {{-- Gudang & Owner bisa Edit --}}
+                            <a href="{{ route('products.edit', $item->id) }}" class="px-3 py-1.5 rounded-lg text-sky-600 hover:bg-sky-50 font-medium inline-block text-xs transition-colors">Edit</a>
+                            
+                            {{-- TAPI Hanya Owner yang bisa Delete --}}
                             @if(auth()->user()->role === 'owner')
-                                <a href="{{ route('products.edit', $item->id) }}" class="px-3 py-1.5 rounded-lg text-sky-600 hover:bg-sky-50 font-medium inline-block text-xs transition-colors">Edit</a>
-                                
-                                <form action="{{ route('products.destroy', $item->id) }}" method="POST" class="inline">
-                                    @csrf @method('DELETE')
-                                    <button type="button" onclick="konfirmasiHapus(this, '{{ addslashes($item->name) }}')" 
-                                            class="px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 font-medium text-xs transition-colors">
-                                        Delete
-                                    </button>
-                                </form>
-                            @else
-                                <span class="text-slate-400 text-xs italic">View Only</span>
+                            <form action="{{ route('products.destroy', $item->id) }}" method="POST" class="inline">
+                                @csrf @method('DELETE')
+                                <button type="button" onclick="konfirmasiHapus(this, '{{ addslashes($item->name) }}')" 
+                                        class="px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 font-medium text-xs transition-colors">
+                                    Delete
+                                </button>
+                            </form>
                             @endif
                         </td>
+                        @endif
                     </tr>
                     @endforeach
+
+                    @if($products->isEmpty())
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                            Belum ada data produk atau pencarian tidak ditemukan.
+                        </td>
+                    </tr>
+                    @endif
                 </tbody>
             </table>
         </div>

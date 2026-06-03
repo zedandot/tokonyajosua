@@ -5,7 +5,7 @@
 @section('content')
 <div class="space-y-6 max-w-4xl mx-auto">
     <div class="flex items-center justify-between">
-        <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Edit Data Produk</h1>
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Edit Produk: {{ $product->name }}</h1>
         <a href="{{ route('products.index') }}" class="text-slate-500 hover:text-slate-700 font-medium text-sm">&larr; Kembali</a>
     </div>
 
@@ -15,14 +15,17 @@
             @method('PUT')
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {{-- Nama Produk --}}
                 <div class="col-span-1 md:col-span-2">
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Produk</label>
-                    <input type="text" name="name" value="{{ $product->name }}" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none">
+                    <input type="text" name="name" value="{{ $product->name }}" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none">
                 </div>
 
+                {{-- Kategori --}}
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Kategori</label>
-                    <select name="category_id" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none">
+                    <select name="category_id" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none">
+                        <option value="">Pilih Kategori</option>
                         @foreach($categories as $category)
                             <option value="{{ $category->id }}" {{ $product->category_id == $category->id ? 'selected' : '' }}>
                                 {{ $category->name }}
@@ -31,30 +34,34 @@
                     </select>
                 </div>
 
+                {{-- Stok Terkini --}}
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Stok</label>
-                    <input type="number" name="stock" value="{{ $product->stock }}" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Stok (Terkini)</label>
+                    <input type="number" name="stock" value="{{ $product->inventory->current_stock ?? 0 }}" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none">
                 </div>
 
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Harga Modal (Rp)</label>
-                    <input type="number" name="purchase_price" value="{{ $product->purchase_price }}" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none">
-                </div>
+                {{-- 🚀 LOGIKA AKSES HARGA (HANYA MUNCUL UNTUK OWNER) --}}
+                @if(auth()->user()->role === 'owner')
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Harga Modal (Rp)</label>
+                        <input type="number" name="purchase_price" value="{{ (int)$product->purchase_price }}" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Harga Jual (Rp)</label>
+                        <input type="number" name="selling_price" value="{{ (int)$product->selling_price }}" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none">
+                    </div>
+                @endif
 
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Harga Jual (Rp)</label>
-                    <input type="number" name="selling_price" value="{{ $product->selling_price }}" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none">
-                </div>
-
+                {{-- Batas Stok Minimal --}}
                 <div class="col-span-1 md:col-span-2">
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Batas Minimal Stok (Peringatan)</label>
-                    <input type="number" name="min_stock" value="{{ $product->min_stock }}" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none">
+                    <input type="number" name="min_stock" value="{{ $product->inventory->minimum_stock ?? 0 }}" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none">
                 </div>
             </div>
 
             <div class="pt-4 flex justify-end">
                 <button type="submit" class="px-6 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium transition-colors">
-                    Perbarui Data
+                    Simpan Perubahan
                 </button>
             </div>
         </form>
