@@ -14,11 +14,13 @@
             @csrf
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {{-- Nama Produk --}}
                 <div class="col-span-1 md:col-span-2">
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Produk</label>
                     <input type="text" name="name" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none" placeholder="Masukkan nama produk">
                 </div>
 
+                {{-- Kategori --}}
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Kategori</label>
                     <select name="category_id" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none">
@@ -29,21 +31,29 @@
                     </select>
                 </div>
 
+                {{-- Stok Awal --}}
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Stok Awal</label>
                     <input type="number" name="stock" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none" placeholder="0">
                 </div>
 
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Harga Modal (Rp)</label>
-                    <input type="number" name="purchase_price" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none" placeholder="Contoh: 10000">
-                </div>
+                {{-- 🚀 LOGIKA AKSES HARGA (HANYA OWNER) --}}
+                @if(auth()->user()->role === 'owner')
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Harga Modal (Rp)</label>
+                        <input type="number" name="purchase_price" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none" placeholder="Contoh: 10000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Harga Jual (Rp)</label>
+                        <input type="number" name="selling_price" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none" placeholder="Contoh: 15000">
+                    </div>
+                @else
+                    {{-- Input tersembunyi agar validasi di Controller tetap lolos --}}
+                    <input type="hidden" name="purchase_price" value="0">
+                    <input type="hidden" name="selling_price" value="0">
+                @endif
 
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Harga Jual (Rp)</label>
-                    <input type="number" name="selling_price" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none" placeholder="Contoh: 15000">
-                </div>
-
+                {{-- Batas Stok --}}
                 <div class="col-span-1 md:col-span-2">
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Batas Minimal Stok (Peringatan)</label>
                     <input type="number" name="min_stock" required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 outline-none" placeholder="Contoh: 5">

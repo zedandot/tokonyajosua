@@ -8,7 +8,7 @@ use App\Models\SaleItem;
 use App\Models\Product;
 use App\Models\Inventory;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB; // Tambahkan DB untuk operasi agregasi MongoDB
+use Illuminate\Support\Facades\DB; 
 
 class DashboardController extends Controller
 {
@@ -19,9 +19,14 @@ class DashboardController extends Controller
         if ($role === 'owner') {
             return $this->ownerDashboard();
         } elseif ($role === 'kasir') {
-            return view('dashboard.cashier');
+            // 🚀 KODE DIPERBARUI: Mengambil data produk yang stoknya ada untuk Dashboard Kasir
+            $products = Product::whereHas('inventory', function($query) {
+                $query->where('current_stock', '>', 0);
+            })->with('inventory')->get();
+            
+            return view('dashboard.cashier', compact('products'));
         } elseif ($role === 'gudang') {
-            // 🚀 KODE DIPERBARUI: Ambil data gudang, lalu saring (buang) data yang produk induknya sudah hilang
+            // 🚀 Filter data gudang agar tidak menampilkan produk yang sudah dihapus
             $inventories = Inventory::with('product')->get()->filter(function ($inv) {
                 return $inv->product !== null;
             });
@@ -50,7 +55,7 @@ class DashboardController extends Controller
         }
         $profitToday = $revenueToday - $costToday;
 
-        // 2. Hitung Penjualan Kemarin (Untuk Persentase Naik/Turun)
+        // 2. Hitung Penjualan Kemarin
         $yesterday = Carbon::yesterday();
         $salesYesterday = Sale::whereDate('created_at', $yesterday)->get();
         $revenueYesterday = $salesYesterday->sum(fn($s) => $s->grand_total ?? $s->total_amount ?? 0);
@@ -59,11 +64,10 @@ class DashboardController extends Controller
         if ($revenueYesterday > 0) {
             $percentageChange = (($revenueToday - $revenueYesterday) / $revenueYesterday) * 100;
         } elseif ($revenueToday > 0) {
-            $percentageChange = 100; // Jika kemarin 0, tapi hari ini ada, anggap naik 100%
+            $percentageChange = 100;
         }
 
         // 3. Hitung Modal Belanja (Total HPP seluruh barang di gudang)
-        // 🚀 KODE DIPERBARUI: Filter juga dipasang di sini agar hitungan Owner tidak meleset
         $inventories = Inventory::with('product')->get()->filter(function ($inv) {
             return $inv->product !== null;
         });
@@ -88,7 +92,7 @@ class DashboardController extends Controller
         // 5. Riwayat 5 Transaksi Terakhir
         $recentTransactions = Sale::latest()->take(5)->get();
 
-        // 6. Grafik Penjualan Mingguan (7 Hari Terakhir)
+        // 6. Grafik Penjualan Mingguan
         $chartData = [];
         $maxChartValue = 0;
         for ($i = 6; $i >= 0; $i--) {
@@ -104,13 +108,11 @@ class DashboardController extends Controller
                 'total' => $dailyTotal
             ];
         }
-        // Hitung tinggi grafik
         foreach ($chartData as &$data) {
             $data['height'] = $maxChartValue > 0 ? round(($data['total'] / $maxChartValue) * 100) : 0;
         }
 
-        // 7. Top 5 Barang Paling Sering Dibeli (Agregasi)
-        // Karena MongoDB tidak mendukung "groupBy" seperti MySQL, kita hitung manual via PHP
+        // 7. Top 5 Barang Paling Sering Dibeli
         $allSaleItems = SaleItem::with('product')->get();
         $productSalesCount = [];
         
@@ -123,7 +125,7 @@ class DashboardController extends Controller
                 $productSalesCount[$name] += $item->quantity;
             }
         }
-        arsort($productSalesCount); // Urutkan dari yang terbanyak
+        arsort($productSalesCount);
         $topProducts = array_slice($productSalesCount, 0, 5, true);
 
         return view('dashboard.index', compact(

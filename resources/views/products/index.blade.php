@@ -9,10 +9,14 @@
             <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Product Management</h1>
             <p class="text-slate-500 text-sm mt-1">Manage your product catalog</p>
         </div>
+        
+        {{-- 🚀 AKSES TERBATAS: Tombol tambah hanya untuk Owner --}}
+        @if(auth()->user()->role === 'owner')
         <a href="{{ route('products.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium shadow-sm transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Add Product
         </a>
+        @endif
     </div>
 
     @if(session('success'))
@@ -23,10 +27,10 @@
 
     <form action="{{ route('products.index') }}" method="GET" class="flex flex-col sm:flex-row gap-4">
         <input type="search" name="search" value="{{ request('search') }}" placeholder="Search products (tekan enter)..." 
-               class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+               class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
         
         <select name="category" onchange="this.form.submit()" 
-                class="px-4 py-2.5 rounded-lg border border-slate-200 min-w-[140px] focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                class="px-4 py-2.5 rounded-lg border border-slate-200 min-w-[140px] focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none">
             <option value="">All Categories</option>
             @foreach($categories as $category)
                 <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
@@ -34,7 +38,6 @@
                 </option>
             @endforeach
         </select>
-        <button type="submit" class="hidden"></button>
     </form>
 
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -60,52 +63,47 @@
                             </span>
                         </td>
                         
-                        {{-- 🟢 PERBAIKAN TOTAL: Visualisasi Angka Stok Berbasis Desain Finansial Modern --}}
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                             @php
                                 $stock = $item->inventory->current_stock ?? 0;
                                 $min = $item->inventory->minimum_stock ?? 0;
-                                $isLow = $stock <= $min;
                             @endphp
                             
                             @if($stock === 0)
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 border border-red-200">
-                                    Habis
-                                </span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 border border-red-200">Habis</span>
                             @else
-                                <span class="{{ $isLow ? 'text-amber-600 font-black bg-amber-50 px-2 py-0.5 rounded border border-amber-200' : 'text-slate-800 font-bold' }}">
+                                <span class="{{ $stock <= $min ? 'text-amber-600 font-black bg-amber-50 px-2 py-0.5 rounded border border-amber-200' : 'text-slate-800 font-bold' }}">
                                     {{ number_format($stock, 0, ',', '.') }}
                                 </span>
                             @endif
                             <span class="text-slate-400 text-xs font-medium ml-1">pcs</span>
                         </td>
                         
-                        <td class="px-6 py-4 text-right text-slate-600">Rp {{ number_format($item->purchase_price, 0, ',', '.') }}</td>
-                        <td class="px-6 py-4 text-right font-black text-sky-600">Rp {{ number_format($item->selling_price, 0, ',', '.') }}</td>
+                        {{-- 🚀 AKSES DATA FINANSIAL HANYA UNTUK OWNER --}}
+                        <td class="px-6 py-4 text-right text-slate-600">
+                            {{ auth()->user()->role === 'owner' ? 'Rp ' . number_format($item->purchase_price, 0, ',', '.') : '---' }}
+                        </td>
+                        <td class="px-6 py-4 text-right font-black text-sky-600">
+                            {{ auth()->user()->role === 'owner' ? 'Rp ' . number_format($item->selling_price, 0, ',', '.') : '---' }}
+                        </td>
                         
                         <td class="px-6 py-4 text-center whitespace-nowrap">
-                            <a href="{{ route('products.edit', $item->id) }}" class="px-3 py-1.5 rounded-lg text-sky-600 hover:bg-sky-50 font-medium inline-block text-xs transition-colors">Edit</a>
-                            
-                            <form action="{{ route('products.destroy', $item->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" 
-                                        onclick="konfirmasiHapus(this, '{{ addslashes($item->name) }}')" 
-                                        class="px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 font-medium text-xs transition-colors">
-                                    Delete
-                                </button>
-                            </form>
+                            @if(auth()->user()->role === 'owner')
+                                <a href="{{ route('products.edit', $item->id) }}" class="px-3 py-1.5 rounded-lg text-sky-600 hover:bg-sky-50 font-medium inline-block text-xs transition-colors">Edit</a>
+                                
+                                <form action="{{ route('products.destroy', $item->id) }}" method="POST" class="inline">
+                                    @csrf @method('DELETE')
+                                    <button type="button" onclick="konfirmasiHapus(this, '{{ addslashes($item->name) }}')" 
+                                            class="px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 font-medium text-xs transition-colors">
+                                        Delete
+                                    </button>
+                                </form>
+                            @else
+                                <span class="text-slate-400 text-xs italic">View Only</span>
+                            @endif
                         </td>
                     </tr>
                     @endforeach
-                    
-                    @if($products->isEmpty())
-                    <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-slate-500">
-                            Belum ada data produk atau pencarian tidak ditemukan.
-                        </td>
-                    </tr>
-                    @endif
                 </tbody>
             </table>
         </div>
@@ -113,6 +111,7 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 function konfirmasiHapus(button, namaProduk) {
     Swal.fire({
@@ -123,8 +122,7 @@ function konfirmasiHapus(button, namaProduk) {
         confirmButtonColor: '#ef4444', 
         cancelButtonColor: '#94a3b8',  
         confirmButtonText: 'Ya, Hapus!',
-        cancelButtonText: 'Batal',
-        reverseButtons: true
+        cancelButtonText: 'Batal'
     }).then((result) => {
         if (result.isConfirmed) {
             button.closest('form').submit();
